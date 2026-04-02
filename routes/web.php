@@ -15,10 +15,16 @@ use App\Http\Controllers\AuthController;
 // Is link ko browser mein kholne par tables ban jayenge: https://lgcc-portal.onrender.com/migrate-db
 Route::get('/migrate-db', function () {
     try {
-        Artisan::call('migrate:fresh', ['--force' => true]); // 'fresh' use kar rahe hain taaki pura clean setup ho
-        return "<h1>Success!</h1><p>Migration Successful! Sabhi tables ban gaye hain. Ab aap login kar sakte hain.</p><a href='/'>Go to Home</a>";
+        // 1. Tables banayega
+        Artisan::call('migrate:fresh', ['--force' => true]);
+        
+        // 2. Seeder chalayega (Jo aapne banaya tha)
+        Artisan::call('db:seed', ['--force' => true]);
+        
+        return "<h1>Success!</h1><p>Migration aur Seeding dono ho gayi bhaiya jii! Ab check kijiye.</p>";
     } catch (\Exception $e) {
-        return "<h1>Error Aa Gaya Bhaiya!</h1><p>" . $e->getMessage() . "</p>";
+        // Asli error yahan dikhega
+        return "<h1>Error:</h1><pre>" . $e->getMessage() . "</pre>";
     }
 });
 
