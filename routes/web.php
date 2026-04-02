@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan; // Ye zaruri hai migration ke liye
 use App\Models\Package;
 use App\Http\Controllers\AuthController;
 
@@ -10,9 +11,25 @@ use App\Http\Controllers\AuthController;
 |--------------------------------------------------------------------------
 */
 
+// --- 0. SPECIAL MIGRATION ROUTE (Sirf ek baar chalane ke liye) ---
+// Is link ko browser mein kholne par tables ban jayenge: https://lgcc-portal.onrender.com/migrate-db
+Route::get('/migrate-db', function () {
+    try {
+        Artisan::call('migrate:fresh', ['--force' => true]); // 'fresh' use kar rahe hain taaki pura clean setup ho
+        return "<h1>Success!</h1><p>Migration Successful! Sabhi tables ban gaye hain. Ab aap login kar sakte hain.</p><a href='/'>Go to Home</a>";
+    } catch (\Exception $e) {
+        return "<h1>Error Aa Gaya Bhaiya!</h1><p>" . $e->getMessage() . "</p>";
+    }
+});
+
 // --- 1. CORE PAGES ---
 Route::get('/', function () {
-    $packages = Package::all(); 
+    // Note: Agar Package table khaali hai toh error aa sakta hai, isliye try-catch use kar sakte hain
+    try {
+        $packages = Package::all(); 
+    } catch (\Exception $e) {
+        $packages = collect(); // Khaali collection agar table nahi mili toh
+    }
     return view('pages.home', compact('packages'));
 })->name('home');
 
@@ -21,7 +38,11 @@ Route::get('/global-career', function () {
 })->name('global.career');
 
 Route::get('/services', function () {
-    $packages = Package::all();
+    try {
+        $packages = Package::all();
+    } catch (\Exception $e) {
+        $packages = collect();
+    }
     return view('pages.packages', compact('packages'));
 })->name('packages');
 
