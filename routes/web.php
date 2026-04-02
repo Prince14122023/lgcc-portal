@@ -13,18 +13,36 @@ use App\Http\Controllers\AuthController;
 
 // --- 0. SPECIAL MIGRATION ROUTE (Sirf ek baar chalane ke liye) ---
 // Is link ko browser mein kholne par tables ban jayenge: https://lgcc-portal.onrender.com/migrate-db
-Route::get('/migrate-db', function () {
+Route::get('/seed-services', function () {
     try {
-        // 1. Tables banayega
-        Artisan::call('migrate:fresh', ['--force' => true]);
-        
-        // 2. Seeder chalayega (Jo aapne banaya tha)
-        Artisan::call('db:seed', ['--force' => true]);
-        
-        return "<h1>Success!</h1><p>Migration aur Seeding dono ho gayi bhaiya jii! Ab check kijiye.</p>";
+        // Purane khaali data ko saaf karne ke liye (Optional)
+        \App\Models\Package::truncate();
+
+        // 1. LGCC BASIC
+        \App\Models\Package::create([
+            'name' => 'LGCC BASIC',
+            'price' => 999,
+            'description' => 'Perfect for foundation building, counseling, and core skill mapping.'
+            // Agar aapke database mein 'features' column hai toh wo bhi add kar sakte hain
+        ]);
+
+        // 2. LGCC STANDARD
+        \App\Models\Package::create([
+            'name' => 'LGCC STANDARD',
+            'price' => 1499,
+            'description' => 'The professional choice for India-wide placements and exam prep.'
+        ]);
+
+        // 3. LGCC PREMIUM
+        \App\Models\Package::create([
+            'name' => 'LGCC PREMIUM',
+            'price' => 1999,
+            'description' => 'Elite global mastery with entrepreneurship and lifetime support.'
+        ]);
+
+        return "<h1>Mubarak Ho!</h1><p>Teeno Professional Packages insert ho gaye hain.</p><a href='/services'>Services Page Dekhiye</a>";
     } catch (\Exception $e) {
-        // Asli error yahan dikhega
-        return "<h1>Error:</h1><pre>" . $e->getMessage() . "</pre>";
+        return "Error: " . $e->getMessage();
     }
 });
 
