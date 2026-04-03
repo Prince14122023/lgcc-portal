@@ -15,37 +15,38 @@ use App\Http\Controllers\AuthController;
 // Is link ko browser mein kholne par tables ban jayenge: https://lgcc-portal.onrender.com/migrate-db
 Route::get('/seed-services', function () {
     try {
-        // Purane khaali data ko saaf karne ke liye (Optional)
-        \App\Models\Package::truncate();
+        // Purana data saaf karte hain
+        \DB::table('packages')->truncate();
 
         // 1. LGCC BASIC
-        \App\Models\Package::create([
-            'name' => 'LGCC BASIC',
-            'price' => 999,
-            'description' => 'Perfect for foundation building, counseling, and core skill mapping.'
-            // Agar aapke database mein 'features' column hai toh wo bhi add kar sakte hain
-        ]);
+        $p1 = new \App\Models\Package();
+        $p1->name = 'LGCC BASIC';
+        $p1->price = 999;
+        $p1->description = 'Perfect for foundation building, counseling, and core skill mapping.';
+        $p1->validity = '1 Year'; // Aapne database mein ye column rakha hai, isliye ye zaruri hai
+        $p1->save();
 
         // 2. LGCC STANDARD
-        \App\Models\Package::create([
-            'name' => 'LGCC STANDARD',
-            'price' => 1499,
-            'description' => 'The professional choice for India-wide placements and exam prep.'
-        ]);
+        $p2 = new \App\Models\Package();
+        $p2->name = 'LGCC STANDARD';
+        $p2->price = 1499;
+        $p2->description = 'The professional choice for India-wide placements and exam prep.';
+        $p2->validity = '2 Years';
+        $p2->save();
 
         // 3. LGCC PREMIUM
-        \App\Models\Package::create([
-            'name' => 'LGCC PREMIUM',
-            'price' => 1999,
-            'description' => 'Elite global mastery with entrepreneurship and lifetime support.'
-        ]);
+        $p3 = new \App\Models\Package();
+        $p3->name = 'LGCC PREMIUM';
+        $p3->price = 1999;
+        $p3->description = 'Elite global mastery with entrepreneurship and lifetime support.';
+        $p3->validity = 'Lifetime';
+        $p3->save();
 
-        return "<h1>Mubarak Ho!</h1><p>Teeno Professional Packages insert ho gaye hain.</p><a href='/services'>Services Page Dekhiye</a>";
+        return "<h1>Mubarak Ho!</h1><p>Teeno Professional Packages (with validity) insert ho gaye hain.</p><a href='/services'>Services Page Dekhiye</a>";
     } catch (\Exception $e) {
-        return "Error: " . $e->getMessage();
+        return "<h1>Error Aa Gaya:</h1><pre>" . $e->getMessage() . "</pre>";
     }
 });
-
 // --- 1. CORE PAGES ---
 Route::get('/', function () {
     // Note: Agar Package table khaali hai toh error aa sakta hai, isliye try-catch use kar sakte hain
