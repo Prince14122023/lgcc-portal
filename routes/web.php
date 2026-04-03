@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan; // Ye zaruri hai migration ke liye
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use App\Models\Package;
 use App\Http\Controllers\AuthController;
 
@@ -11,52 +13,64 @@ use App\Http\Controllers\AuthController;
 |--------------------------------------------------------------------------
 */
 
-// --- 0. SPECIAL MIGRATION ROUTE (Sirf ek baar chalane ke liye) ---
-// Is link ko browser mein kholne par tables ban jayenge: https://lgcc-portal.onrender.com/migrate-db
+// --- 0. THE ULTIMATE SETUP ROUTE ---
+// Is link ko kholte hi saare column missing wale error khatam ho jayenge
 Route::get('/final-setup', function () {
     try {
-        // 1. Purane tables saaf karke naye banayega (Ek dum fresh start)
-        \Artisan::call('migrate:fresh', ['--force' => true]);
-
-        // 2. Data insert karega saare columns ke saath
-        // Note: Agar aapke table mein features ya description missing bhi hoga, toh ye error nahi dega
+        // 1. Purane table ko delete karke naya sahi structure banate hain
+        Schema::dropIfExists('packages');
         
-        $p1 = new \App\Models\Package();
-        $p1->name = 'LGCC BASIC';
-        $p1->price = 999;
-        $p1->validity = '1 Year';
-        $p1->description = 'Perfect for foundation building, counseling, and core skill mapping.';
-        $p1->features = 'Career Counseling, Job Support'; // Error isi wajah se tha
-        $p1->save();
+        Schema::create('packages', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('price');
+            $table->string('validity')->nullable();
+            $table->text('description')->nullable();
+            $table->text('features')->nullable();
+            $table->timestamps();
+        });
 
-        $p2 = new \App\Models\Package();
-        $p2->name = 'LGCC STANDARD';
-        $p2->price = 1499;
-        $p2->validity = '2 Years';
-        $p2->description = 'The professional choice for India-wide placements and exam prep.';
-        $p2->features = '2 Free Courses, Work-From-Home Jobs';
-        $p2->save();
+        // 2. Fresh Data Insert karte hain
+        $packages = [
+            [
+                'name' => 'LGCC BASIC',
+                'price' => 999,
+                'validity' => '1 Year',
+                'description' => 'Perfect for foundation building, counseling, and core skill mapping.',
+                'features' => 'Career Counseling, Job Support'
+            ],
+            [
+                'name' => 'LGCC STANDARD',
+                'price' => 1499,
+                'validity' => '2 Years',
+                'description' => 'The professional choice for India-wide placements and exam prep.',
+                'features' => '2 Free Courses, Work-From-Home Jobs'
+            ],
+            [
+                'name' => 'LGCC PREMIUM',
+                'price' => 1999,
+                'validity' => 'Lifetime',
+                'description' => 'Elite global mastery with entrepreneurship and lifetime support.',
+                'features' => 'Startup Support, Project Development'
+            ]
+        ];
 
-        $p3 = new \App\Models\Package();
-        $p3->name = 'LGCC PREMIUM';
-        $p3->price = 1999;
-        $p3->validity = 'Lifetime';
-        $p3->description = 'Elite global mastery with entrepreneurship and lifetime support.';
-        $p3->features = 'Startup Support, Project Development';
-        $p3->save();
+        foreach ($packages as $pkg) {
+            Package::create($pkg);
+        }
 
-        return "<h1>Success!</h1><p>Database Refresh ho gaya aur data bhi dhal gaya!</p><a href='/services'>Services Page Dekhiye</a>";
+        return "<h1>Mubarak Ho Prince Bhaiya!</h1><p>Table fresh ban gayi aur data bhi dhal gaya!</p><a href='/services'>Services Page Dekhiye</a>";
     } catch (\Exception $e) {
-        return "<h1>Error Aa Gaya Bhaiya:</h1><pre>" . $e->getMessage() . "</pre>";
+        return "<h1>Error Aa Gaya:</h1><pre>" . $e->getMessage() . "</pre>";
     }
 });
+
 // --- 1. CORE PAGES ---
 Route::get('/', function () {
-    // Note: Agar Package table khaali hai toh error aa sakta hai, isliye try-catch use kar sakte hain
     try {
         $packages = Package::all(); 
     } catch (\Exception $e) {
-        $packages = collect(); // Khaali collection agar table nahi mili toh
+        $packages = collect();
     }
     return view('pages.home', compact('packages'));
 })->name('home');
@@ -79,33 +93,27 @@ Route::get('/mission', function () {
 })->name('mission');
 
 
-// --- 2. AUTHENTICATION SYSTEM (The Backend Logic) ---
+// --- 2. AUTHENTICATION SYSTEM ---
 
-// Login View
 Route::get('/login', function () {
     return view('pages.login');
 })->name('login');
 
-// Step 1: Send OTP (Signup/Login Entry)
 Route::post('/send-otp', [AuthController::class, 'sendOtp'])->name('otp.send');
-
-// Step 2: Verify OTP View & Action
 Route::get('/verify-otp/{phone}', [AuthController::class, 'verifyOtpView'])->name('otp.verify.view');
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('otp.verify.submit');
-
-// Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
-// --- 3. DASHBOARDS (Role Based Placeholders) ---
+// --- 3. DASHBOARDS ---
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
-        return view('pages.dashboard'); // Student/User Dashboard
+        return view('pages.dashboard');
     })->name('dashboard');
 });
 
 
-// --- 4. LEGAL & COMPLIANCE (Razorpay Demand) ---
+// --- 4. LEGAL & COMPLIANCE ---
 Route::get('/privacy-policy', function () {
     return view('pages.privacy');
 })->name('privacy');
